@@ -67,8 +67,12 @@ for t=1:T
 end
 
 Pgmax=[40;152;40;152;300;591;60;400;400;300]/baseMVA;
-PDGmax=[800]/baseMVA;
+PDGmax=[700]/baseMVA;
 Wmax=550/baseMVA;
+%储能
+PESmax=[25]/baseMVA;
+CESmax=[100]/baseMVA;
+CES0=[50]/baseMVA;
 
 BaseG=[1;2;3;4;5;6;8;9];
 PearkG=[7;10];
@@ -102,15 +106,20 @@ Bdsmax=30;
 
 %场景数
 %sigma=100MW
-K=5;
-
-phi=[0.1;0.2;0.4;0.2;0.1];
-
-Wact_base=[124.2,213.65,300,386.35,475.8]/baseMVA;
+% K=5;
+% 
+% phi=[0.1;0.2;0.4;0.2;0.1];
+% 
+% Wact_base=[124.2,213.65,300,386.35,475.8]/baseMVA;
 
 % K=1;
 % phi=[1];
 % Wact_base=[300]/baseMVA;
+
+%sigma=20MW
+K=5;
+Wact_base=[264.8,282.75,300,317.25,335.2]/baseMVA;
+phi=[0.1;0.2;0.4;0.2;0.1];
 
 Wcoe=[1.5,1.4,1.3,1.2,1.1,1,0.8,0.7,0.6,0.55,0.5,0.45,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.35,1.4];
 
@@ -119,10 +128,6 @@ for t=1:T
     Wact(t,:)=Wact_base*Wcoe(t);
 end
 
-%sigma=20MW
-% K=5;
-% Wact=[264.8,282.75,300,317.25,335.2]/baseMVA;
-% phi=[0.1;0.2;0.4;0.2;0.1];
 
 M=1e3;
 
@@ -131,6 +136,7 @@ M=1e3;
 Bds=sdpvar(nds,1,T,'full');
 PDG=sdpvar(nds,1,T,'full');
 ds=sdpvar(nds,1,T,'full');
+Pes=sdpvar(nds,1,T,'full');
 
 %LL Problem
 Pg=sdpvar(ngon,1,T,'full');
@@ -260,8 +266,16 @@ Constraints=[Constraints,0<=Bds(:,1,t)<=Bdsmax];
 %Constraints=[Constraints,Bds==Us];
 Constraints=[Constraints,0<=PDG(:,1,t)<=PDGmax];
 Constraints=[Constraints,0<=ds(:,1,t)<=dsmax(:,t)];
+%储能约束
+Constraints=[Constraints,-PESmax<=Pes(:,1,t)<=PESmax];
+CES=CES0;
+for tt=1:t
+    CES=CES-Pes(:,1,tt);
+end
+Constraints=[Constraints,0<=CES<=CESmax];
 %上层功率平衡约束
-Constraints=[Constraints,ds(:,1,t) == dsn(:,1,t) + PDG(:,1,t)];
+Constraints=[Constraints,ds(:,1,t) == dsn(:,1,t) + PDG(:,1,t) + Pes(:,1,t)];
+
 
 %LL Constraints
 %KKT Pg
@@ -376,7 +390,7 @@ end
 
 %ops = sdpsettings('solver','cplex','verbose',2);
 ops = sdpsettings('solver','gurobi','verbose',2);
-% ops.gurobi.MIPGap=0.0005;
+ops.gurobi.MIPGap=0.015;
 optimize(Constraints,Objective,ops);
 
 
@@ -400,3 +414,4 @@ Pg=reshape(double(Pg),ngon,T);
 dsn=reshape(double(dsn),nds,T);
 ds=reshape(double(ds),nds,T);
 w=reshape(double(w),nw,T);
+Pes=reshape(double(Pes),nds,T);
