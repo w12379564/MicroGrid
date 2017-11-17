@@ -170,7 +170,7 @@ end
 
 
 Objective=Og'*Pg-Bds'*dsn-Uc'*dc...
-    +(Og'*rgk+Us'*dsnk)*phi;
+    +(Og'*rgk+Bds'*dsnk)*phi;
 
 
 

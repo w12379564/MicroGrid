@@ -107,9 +107,7 @@ Rgumax(PearkG)=0.2*Pgmax(PearkG);
 Rgdmax=Rgumax;
 
 coe=1;
-Rds=[1];
-Rdsumax=zeros(nds,1);
-Rdsumax(Rds)=0.1*dsmax(Rds)*coe;
+Rdsumax=0.2/baseMVA;
 Rdsdmax=Rdsumax;
 
 
@@ -277,7 +275,7 @@ end
 Constraints=[Constraints,(-Bds(:,:,t) + Cds'*lamda(:,:,t) - Udsn_down(:,:,t) + Udsn_up(:,:,t) + sum(Udsnk1_down(:,:,t),2) - sum(Udsnk1_up(:,:,t),2)) == 0];
 %KKT dsnk
 for k=1:K
-    Constraints=[Constraints,(phi(k)*Us - Cds'*lamdak(:,k,t) - Udsnk1_down(:,k,t) + Udsnk1_up(:,k,t) -Udsnk2_down(:,k,t) + Udsnk2_up(:,k,t)) == 0];
+    Constraints=[Constraints,(phi(k)*Bds(:,:,t) - Cds'*lamdak(:,k,t) - Udsnk1_down(:,k,t) + Udsnk1_up(:,k,t) -Udsnk2_down(:,k,t) + Udsnk2_up(:,k,t)) == 0];
 end
 
 
@@ -351,7 +349,7 @@ end
 Objective=0;
 
 for t=1:T
-    Objective = Objective - (lamda(:,:,t)'*Cdc*dc(:,t)...
+    Objective = Objective - 100*(lamda(:,:,t)'*Cdc*dc(:,t)...
         -Ug_up(:,:,t)'*Pgmax - sum(Urgk1_up(:,:,t)'*Pgmax) - sum(Urgk2_down(:,:,t)'*Rgdmax) - sum(Urgk2_up(:,:,t)'*Rgumax)...
         -Utheta_down(:,:,t)'*pi_ - Utheta_up(:,:,t)'*pi_ - sum(Uthetak_down(:,:,t)'*pi_) - sum(Uthetak_up(:,:,t)'*pi_)...
         - Og'*Pg(:,:,t) -( Og'*rgk(:,:,t))*phi...
@@ -359,6 +357,7 @@ for t=1:T
 end
 
 ops = sdpsettings('solver','gurobi','verbose',2);
+ops.gurobi.MIPGap=0.01;
 optimize(Constraints,Objective,ops);
 
 profit=zeros(1,T);
@@ -374,11 +373,47 @@ end
 %         - Og'*Pg(:,:,t) -( Og'*rgk(:,:,t))*phi...
 %         + Us*ds(:,:,t) - ODG*PDG(:,:,t) - (Us*rdsk(:,:,t) + ODG*rdgk(:,:,t))*phi)
 
-Bds=reshape(double(Bds),nds,T);
+Bds_data=reshape(double(Bds),nds,T);
 priceDA=reshape(double(lamda),nb,T);
-Pg=reshape(double(Pg),ngon,T);
-dsn=reshape(double(dsn),nds,T);
-ds=reshape(double(ds),nds,T);
-w=reshape(double(w),nds,T);
-PDG=reshape(double(PDG),nds,T);
-Pes=reshape(double(Pes),nds,T);
+Pg_data=reshape(double(Pg),ngon,T);
+dsn_data=reshape(double(dsn),nds,T);
+ds_data=reshape(double(ds),nds,T);
+w_data=reshape(double(w),nds,T);
+PDG_data=reshape(double(PDG),nds,T);
+Pes_data=reshape(double(Pes),nds,T);
+dsnk_data=double(dsnk);
+
+rdsk_e=zeros(1,T);
+for t=1:T
+    rdsk_e(t)=double(rdsk(:,:,t)*phi);
+end
+
+dsnk_e=zeros(1,T);
+for t=1:T
+    dsnk_e(t)=double(dsnk(:,:,t)*phi);
+end
+
+w_e=zeros(1,T);
+for t=1:T
+    w_e(t)=double((Wact(t,:)-wpk(:,:,t))*phi);
+end
+
+wpk_data=zeros(1,T);
+for t=1:T
+    wpk_data(t)=double(wpk(:,:,t)*phi);
+end
+
+rdgk_e=zeros(1,T);
+for t=1:T
+    rdgk_e(t)=double(rdgk(:,:,t)*phi);
+end
+
+Wact_e=zeros(1,T);
+for t=1:T
+    Wact_e(t)=double(Wact(t,:)*phi);
+end
+
+W_delta=zeros(T,K);
+for t=1:T
+W_delta(t,:)=double(Wact(t,:)-w(:,:,t));
+end

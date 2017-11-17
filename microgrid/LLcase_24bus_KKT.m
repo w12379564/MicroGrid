@@ -222,7 +222,7 @@ end
 Constraints=[Constraints,(-Bds + Cds'*lamda - Udsn_down + Udsn_up + sum(Udsnk1_down,2) - sum(Udsnk1_up,2)) == 0];
 %KKT dsnk
 for k=1:K
-    Constraints=[Constraints,(phi(k)*Us - Cds'*lamdak(:,k) - Udsnk1_down(:,k) + Udsnk1_up(:,k) -Udsnk2_down(:,k) + Udsnk2_up(:,k)) == 0];
+    Constraints=[Constraints,(phi(k)*Bds - Cds'*lamdak(:,k) - Udsnk1_down(:,k) + Udsnk1_up(:,k) -Udsnk2_down(:,k) + Udsnk2_up(:,k)) == 0];
 end
 
 
@@ -306,6 +306,6 @@ optimize(Constraints,Objective,ops);
 double(Pg)
 double(dsn)
 double(Og'*Pg-Bds'*dsn-Uc'*dc...
-    +(Og'*rgk+Us'*dsnk)*phi)
+    +(Og'*rgk+Bds'*dsnk)*phi)
 
 double(dualObj)

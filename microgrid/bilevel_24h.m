@@ -263,7 +263,7 @@ end
 Constraints=[Constraints,(-Bds(:,:,t) + Cds'*lamda(:,:,t) - Udsn_down(:,:,t) + Udsn_up(:,:,t) + sum(Udsnk1_down(:,:,t),2) - sum(Udsnk1_up(:,:,t),2)) == 0];
 %KKT dsnk
 for k=1:K
-    Constraints=[Constraints,(phi(k)*Us - Cds'*lamdak(:,k,t) - Udsnk1_down(:,k,t) + Udsnk1_up(:,k,t) -Udsnk2_down(:,k,t) + Udsnk2_up(:,k,t)) == 0];
+    Constraints=[Constraints,(phi(k)*Bds(:,:,t) - Cds'*lamdak(:,k,t) - Udsnk1_down(:,k,t) + Udsnk1_up(:,k,t) -Udsnk2_down(:,k,t) + Udsnk2_up(:,k,t)) == 0];
 end
 
 
