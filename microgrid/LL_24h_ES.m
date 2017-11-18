@@ -49,7 +49,7 @@ T=24;
 
 %微网参数
 dsmax_base=[0.36]/baseMVA;
-Loadcoe=[0.6,0.61,0.62,0.63,0.64,0.65,0.7,0.8,0.9,1.1,1.5,1.6,1.2,1.1,1,0.9,0.8,0.85,1,1.5,1.55,1.1,0.8,0.7];
+Loadcoe=[0.45,0.45,0.5,0.55,0.6,0.65,0.7,0.8,0.9,1.1,1.5,1.6,1.2,1.1,1,0.9,0.8,0.85,1,1.5,1.55,1.1,0.8,0.7];
 %Loadcoe=[1];
 
 dsmax=zeros(nds,T);
@@ -122,20 +122,11 @@ pi_=pi*ones(nb,1);
 
 Bdsmax=30;
 
+Bds=ones(1,1,T)*26;
 
 M=1e3;
 
 %variables
-%UL problem
-Bds=sdpvar(nds,1,T,'full');
-PDG=sdpvar(nds,1,T,'full');
-ds=sdpvar(nds,1,T,'full');
-Pes=sdpvar(nds,1,T,'full');
-
-rdsk=sdpvar(nds,K,T,'full');
-rdgk=sdpvar(nds,K,T,'full');
-w=sdpvar(nds,1,T,'full');
-wpk=sdpvar(nds,K,T,'full');
 
 %LL Problem
 %variables
@@ -238,31 +229,6 @@ binUthetak_up=binvar(nb,K,T,'full');
 
 Constraints=[];
 for t=1:T
-%UL Constraints
-Constraints=[Constraints,0<=Bds(:,:,t)<=Bdsmax];
-% Constraints=[Constraints,Bds(:,:,t)==Us];
-Constraints=[Constraints,0<=PDG(:,:,t)<=PDGmax];
-Constraints=[Constraints,0<=ds(:,:,t)<=dsmax(:,t)];
-Constraints=[Constraints,0<=w(:,:,t)<=Wmax];
-
-%储能约束
-Constraints=[Constraints,-PESmax<=Pes(:,1,t)<=PESmax];
-CES=CES0;
-for tt=1:t
-    CES=CES-Pes(:,1,tt);
-end
-Constraints=[Constraints,0<=CES<=CESmax];
-
-%微网功率平衡
-Constraints=[Constraints,(dsn(:,:,t)+PDG(:,:,t)+w(:,:,t)+ Pes(:,:,t)-ds(:,:,t))==0];
-for k=1:K
-Constraints=[Constraints,0<=wpk(:,k,t)<=Wact(t,k)];
-Constraints=[Constraints,(rdgk(:,k,t)+rdsk(:,k,t)-dsnk(:,k,t)+(Wact(t,k)-w(:,:,t)-wpk(:,k,t)))==0];
-Constraints=[Constraints,-(dsmax(:,t)-ds(:,:,t))<=rdsk(:,k,t)<=ds(:,:,t)];
-Constraints=[Constraints,-PDG(:,:,t)<=rdgk(:,k,t)<=(PDGmax-PDG(:,:,t))];
-Constraints=[Constraints,-Rdgdmax<=rdgk(:,k,t)<=Rdgumax];
-end
-
 %LL Constraints
 %KKT Pg
 Constraints=[Constraints,(Og - Cg'*lamda(:,:,t) - Ug_down(:,:,t) + Ug_up(:,:,t) - sum(Urgk1_down(:,:,t),2) +  sum(Urgk1_up(:,:,t),2)) == 0];
@@ -348,23 +314,18 @@ end
 
 Objective=0;
 
-for t=1:T
-    Objective = Objective - 100*(lamda(:,:,t)'*Cdc*dc(:,t)...
-        -Ug_up(:,:,t)'*Pgmax - sum(Urgk1_up(:,:,t)'*Pgmax) - sum(Urgk2_down(:,:,t)'*Rgdmax) - sum(Urgk2_up(:,:,t)'*Rgumax)...
-        -Utheta_down(:,:,t)'*pi_ - Utheta_up(:,:,t)'*pi_ - sum(Uthetak_down(:,:,t)'*pi_) - sum(Uthetak_up(:,:,t)'*pi_)...
-        - Og'*Pg(:,:,t) -( Og'*rgk(:,:,t))*phi...
-        + Us*ds(:,:,t) - ODG*PDG(:,:,t) - (Us*rdsk(:,:,t) + ODG*rdgk(:,:,t))*phi);
-end
+% for t=1:T
+%     Objective = Objective - 100*(lamda(:,:,t)'*Cdc*dc(:,t)...
+%         -Ug_up(:,:,t)'*Pgmax - sum(Urgk1_up(:,:,t)'*Pgmax) - sum(Urgk2_down(:,:,t)'*Rgdmax) - sum(Urgk2_up(:,:,t)'*Rgumax)...
+%         -Utheta_down(:,:,t)'*pi_ - Utheta_up(:,:,t)'*pi_ - sum(Uthetak_down(:,:,t)'*pi_) - sum(Uthetak_up(:,:,t)'*pi_)...
+%         - Og'*Pg(:,:,t) -( Og'*rgk(:,:,t))*phi...
+%         + Us*ds(:,:,t) - ODG*PDG(:,:,t) - (Us*rdsk(:,:,t) + ODG*rdgk(:,:,t))*phi);
+% end
 
 ops = sdpsettings('solver','gurobi','verbose',2);
 %ops.gurobi.MIPGap=0.01;
 optimize(Constraints,Objective,ops);
 
-profit=zeros(1,T);
-
-for t=1:T
-    profit(t) = double(Us*ds(:,:,t)-lamda(:,:,t)'*Cds*dsn(:,:,t)-ODG*PDG(:,:,t)-Us*rdsk(:,:,t)*phi+sum(diag(lamdak(:,:,t)'*Cds*dsnk(:,:,t))) - ODG*rdgk(:,:,t)*phi);
-end
 
 % t=19;
 % p19=double(lamda(:,:,t)'*Cdc*dc(:,t)...
@@ -377,43 +338,10 @@ Bds_data=reshape(double(Bds),nds,T);
 priceDA=reshape(double(lamda),nb,T);
 Pg_data=reshape(double(Pg),ngon,T);
 dsn_data=reshape(double(dsn),nds,T);
-ds_data=reshape(double(ds),nds,T);
-w_data=reshape(double(w),nds,T);
-PDG_data=reshape(double(PDG),nds,T);
-Pes_data=reshape(double(Pes),nds,T);
-dsnk_data=double(dsnk);
 
-rdsk_e=zeros(1,T);
-for t=1:T
-    rdsk_e(t)=double(rdsk(:,:,t)*phi);
-end
 
 dsnk_e=zeros(1,T);
 for t=1:T
     dsnk_e(t)=double(dsnk(:,:,t)*phi);
 end
 
-w_e=zeros(1,T);
-for t=1:T
-    w_e(t)=double((Wact(t,:)-wpk(:,:,t))*phi);
-end
-
-wpk_data=zeros(1,T);
-for t=1:T
-    wpk_data(t)=double(wpk(:,:,t)*phi);
-end
-
-rdgk_e=zeros(1,T);
-for t=1:T
-    rdgk_e(t)=double(rdgk(:,:,t)*phi);
-end
-
-Wact_e=zeros(1,T);
-for t=1:T
-    Wact_e(t)=double(Wact(t,:)*phi);
-end
-
-W_delta=zeros(T,K);
-for t=1:T
-W_delta(t,:)=double(Wact(t,:)-w(:,:,t));
-end

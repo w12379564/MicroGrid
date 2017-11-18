@@ -239,8 +239,8 @@ binUthetak_up=binvar(nb,K,T,'full');
 Constraints=[];
 for t=1:T
 %UL Constraints
-Constraints=[Constraints,0<=Bds(:,:,t)<=Bdsmax];
-% Constraints=[Constraints,Bds(:,:,t)==Us];
+% Constraints=[Constraints,0<=Bds(:,:,t)<=Bdsmax];
+Constraints=[Constraints,Bds(:,:,t)==Us];
 Constraints=[Constraints,0<=PDG(:,:,t)<=PDGmax];
 Constraints=[Constraints,0<=ds(:,:,t)<=dsmax(:,t)];
 Constraints=[Constraints,0<=w(:,:,t)<=Wmax];
@@ -254,7 +254,7 @@ end
 Constraints=[Constraints,0<=CES<=CESmax];
 
 %Î¢Íø¹¦ÂÊÆ½ºâ
-Constraints=[Constraints,(dsn(:,:,t)+PDG(:,:,t)+w(:,:,t)+ Pes(:,:,t)-ds(:,:,t))==0];
+Constraints=[Constraints,(dsn(:,:,t)+PDG(:,:,t)+w(:,:,t) + Pes(:,:,t) -ds(:,:,t))==0];
 for k=1:K
 Constraints=[Constraints,0<=wpk(:,k,t)<=Wact(t,k)];
 Constraints=[Constraints,(rdgk(:,k,t)+rdsk(:,k,t)-dsnk(:,k,t)+(Wact(t,k)-w(:,:,t)-wpk(:,k,t)))==0];

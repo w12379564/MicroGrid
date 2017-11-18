@@ -107,7 +107,7 @@ Rgumax(PearkG)=0.2*Pgmax(PearkG);
 Rgdmax=Rgumax;
 
 coe=1;
-Rdsumax=0.2/baseMVA;
+Rdsumax=0/baseMVA;
 Rdsdmax=Rdsumax;
 
 
