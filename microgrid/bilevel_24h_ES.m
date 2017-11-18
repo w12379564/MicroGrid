@@ -48,8 +48,8 @@ Cdc=sparse(dcbus, (1:ndc)', ones(ndc, 1), nb, ndc);  %% connection matrix of ds
 T=24;
 
 %Î¢Íø²ÎÊý
-dsmax_base=[0.221]/baseMVA;
-Loadcoe=[0.45,0.45,0.5,0.55,0.6,0.65,0.7,0.8,0.9,1.1,1.5,1.6,1.2,1.1,1,0.9,0.8,0.85,1,1.1,1.2,1.1,0.8,0.7];
+dsmax_base=[0.36]/baseMVA;
+Loadcoe=[0.45,0.45,0.5,0.55,0.6,0.65,0.7,0.8,0.9,1.1,1.5,1.6,1.2,1.1,1,0.9,0.8,0.85,1,1.5,1.55,1.1,0.8,0.7];
 %Loadcoe=[1];
 
 dsmax=zeros(nds,T);
@@ -62,7 +62,7 @@ Wcoe=[1.4,1.4,1.3,1.2,1.1,1,0.8,0.7,0.6,0.55,0.5,0.45,0.4,0.5,0.6,0.7,0.8,0.9,1,
 %Wcoe=[1];
 
 K=5;
-Wact_base=[0.02,0.04,0.09,0.12,0.18]/baseMVA;
+Wact_base=[0.1448,0.1327,0.18,0.1673,0.1852]/baseMVA;
 phi=[0.1;0.2;0.4;0.2;0.1];
 
 Wact=zeros(T,K);
@@ -71,16 +71,16 @@ for t=1:T
 end
 
 
-PDGmax=[0.2]/baseMVA;
+PDGmax=[0.4]/baseMVA;
 Rdgumax=0.1*PDGmax;
 Rdgdmax=Rdgumax;
-Wmax=0.23/baseMVA;
+Wmax=0.3/baseMVA;
 Us=[26];
 ODG=[13];
 
 %´¢ÄÜ
-PESmax=[0.01]/baseMVA;
-CESmax=[0.1]/baseMVA;
+PESmax=[0.05]/baseMVA;
+CESmax=[0.2]/baseMVA;
 CES0=[0]/baseMVA;
 
 
@@ -112,7 +112,7 @@ Rdsdmax=Rdsumax;
 
 
 %cost
-Og=[15;12.46;15;12.46;16;13.58;18.57;12;12;0];
+Og=[21;18.57;21;13.58;22;18.57;24.57;13.58;10.46;10.46];
 
 Uc=[23.5;20;25;21;22.3;22];
 
@@ -357,7 +357,7 @@ for t=1:T
 end
 
 ops = sdpsettings('solver','gurobi','verbose',2);
-ops.gurobi.MIPGap=0.01;
+%ops.gurobi.MIPGap=0.01;
 optimize(Constraints,Objective,ops);
 
 profit=zeros(1,T);
